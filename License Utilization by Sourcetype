@@ -1,0 +1,13 @@
+index=_internal source=*license_usage.log type="Usage" earliest=-7d@d latest=@d
+| fields b, st, h, _time, date_wday 
+| eval h=if(len(h)=0 OR isnull(h),"(SQUASHED)",h) 
+| bin _time span=1d 
+| stats sum(b) AS b, dc(h) AS host by st date_wday h
+| stats avg(b) as avg_b, avg(host) AS Host_Count_per_Day by st h
+| eval Avg_MB_per_Day=round(avg_b/1024/1024,2) 
+| eval Avg_GB_per_Day=round(avg_b/1024/1024/1024,2) 
+| eval Avg_MB_per_Host=round(Avg_MB_per_Day/Host_Count_per_Day,2) 
+| eval Host_Count_per_Day=round(Host_Count_per_Day,0) 
+| rename st AS Sourcetype h as Host1
+| table Sourcetype, Avg_MB_per_Day, Avg_GB_per_Day, Host_Count_per_Day, Avg_MB_per_Host, Host1
+| sort Sourcetype
